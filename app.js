@@ -240,7 +240,7 @@ function renderSetup() {
 
     <div class="card">
       <h2>Round settings</h2>
-      <p class="hint">Category Battle turn timer</p>
+      <p class="hint">Category Battle time bank (per team)</p>
       <div class="pill-row" id="turnSecondsRow"></div>
       <p class="hint" style="margin-top:14px;">Quote It / One Word round timer</p>
       <div class="pill-row" id="clueSecondsRow"></div>
@@ -329,7 +329,7 @@ function renderBoard() {
       <div class="round-choice-grid">
         <div class="round-choice" id="chooseCategoryBtn">
           <h3>🎬 Category Battle</h3>
-          <p>Teams race to name movies fitting a category. Miss, repeat, or run out of time and you're out — last team standing wins a genre card.</p>
+          <p>Teams call out movies fitting a category, chess-clock style — each team has its own ${state.settings.turnSeconds}s bank that only runs on their turn. Say one and pass it on; run your clock to zero and you're out. Last team standing wins a genre card.</p>
         </div>
         <div class="round-choice" id="chooseClueBtn">
           <h3>🤫 Quote It / One Word</h3>
@@ -372,16 +372,21 @@ function historyHtml() {
 }
 
 // ---------------- Category Battle round ----------------
+// Chess-clock style: every team gets its own countdown "time bank" for the
+// round. Only the active team's clock runs. Players just call out movies
+// out loud (no typing) — tap "Got one, pass it on" to hand the clock to the
+// next team, or a team is out the moment its own bank hits zero.
 function startCategoryRound() {
   const startTeam = state.turnPointer % state.teamCount;
+  const teamTimes = {};
+  state.teams.forEach((_, i) => { teamTimes[i] = state.settings.turnSeconds; });
   state.round = {
     type: "category",
     category: pickCategory(),
     alive: state.teams.map((_, i) => i),
     activePos: 0,
     startTeam,
-    given: [],
-    timeLeft: state.settings.turnSeconds,
+    teamTimes,
     timerId: null,
     lastTickSecond: null,
   };
@@ -390,7 +395,7 @@ function startCategoryRound() {
   r.alive = r.alive.slice(startIdx).concat(r.alive.slice(0, startIdx));
   state.screen = "category";
   render();
-  startTurnTimer();
+  startTeamTimer();
 }
 
 function currentCategoryTeam() {
@@ -398,20 +403,20 @@ function currentCategoryTeam() {
   return r.alive[r.activePos % r.alive.length];
 }
 
-function startTurnTimer() {
-  clearInterval(state.round.timerId);
-  state.round.timeLeft = state.settings.turnSeconds;
-  state.round.lastTickSecond = null;
-  state.round.timerId = setInterval(() => {
-    const r = state.round;
-    r.timeLeft -= 0.1;
-    if (r.timeLeft <= 0) {
-      r.timeLeft = 0;
+function startTeamTimer() {
+  const r = state.round;
+  clearInterval(r.timerId);
+  r.lastTickSecond = null;
+  r.timerId = setInterval(() => {
+    const teamIdx = currentCategoryTeam();
+    r.teamTimes[teamIdx] -= 0.1;
+    if (r.teamTimes[teamIdx] <= 0) {
+      r.teamTimes[teamIdx] = 0;
       clearInterval(r.timerId);
-      eliminateTeam(currentCategoryTeam());
+      eliminateTeam(teamIdx);
       return;
     }
-    const secLeft = Math.ceil(r.timeLeft);
+    const secLeft = Math.ceil(r.teamTimes[teamIdx]);
     if (secLeft <= 3 && secLeft !== r.lastTickSecond) {
       r.lastTickSecond = secLeft;
       playTick();
@@ -422,33 +427,40 @@ function startTurnTimer() {
 
 function updateTimerBarOnly() {
   const bar = document.getElementById("catTimerBar");
-  if (!bar) return;
-  const pct = Math.max(0, (state.round.timeLeft / state.settings.turnSeconds) * 100);
+  const numEl = document.getElementById("catTimerNum");
+  if (!bar || !numEl) return;
+  const r = state.round;
+  const teamIdx = currentCategoryTeam();
+  const timeLeft = r.teamTimes[teamIdx];
+  const pct = Math.max(0, (timeLeft / state.settings.turnSeconds) * 100);
   bar.style.width = pct + "%";
   bar.classList.toggle("warn", pct <= 50 && pct > 20);
   bar.classList.toggle("danger", pct <= 20);
-  const numEl = document.getElementById("catTimerNum");
-  if (numEl) numEl.textContent = Math.ceil(state.round.timeLeft);
+  numEl.textContent = Math.ceil(timeLeft);
+}
+
+function passTurn() {
+  const r = state.round;
+  playTick();
+  clearInterval(r.timerId);
+  r.activePos = (r.activePos + 1) % r.alive.length;
+  render();
+  startTeamTimer();
 }
 
 function eliminateTeam(teamIdx) {
   const r = state.round;
   playElim();
-  r.alive = r.alive.filter(t => t !== teamIdx);
+  const removedPos = r.alive.indexOf(teamIdx);
+  r.alive.splice(removedPos, 1);
   if (r.alive.length <= 1) {
     clearInterval(r.timerId);
     finishCategoryRound();
     return;
   }
+  r.activePos = removedPos % r.alive.length;
   render();
-  advanceCategoryTurn();
-}
-
-function advanceCategoryTurn() {
-  const r = state.round;
-  r.activePos = r.activePos % r.alive.length;
-  render();
-  startTurnTimer();
+  startTeamTimer();
 }
 
 function finishCategoryRound() {
@@ -466,49 +478,11 @@ function finishCategoryRound() {
   render();
 }
 
-function submitCategoryAnswer(text) {
-  const trimmed = text.trim();
-  if (!trimmed) return;
-  const r = state.round;
-  const dupe = r.given.some(g => g.toLowerCase() === trimmed.toLowerCase());
-  if (dupe) {
-    flashInputError("Already said! Try another.");
-    return;
-  }
-  clearInterval(r.timerId);
-  r.pendingAnswer = trimmed;
-  render();
-}
-
-function flashInputError(msg) {
-  const input = document.getElementById("catAnswerInput");
-  if (!input) return;
-  input.placeholder = msg;
-  input.value = "";
-}
-
-function resolvePendingAnswer(valid) {
-  const r = state.round;
-  const teamIdx = currentCategoryTeam();
-  if (valid) {
-    playTick();
-    r.given.push(r.pendingAnswer);
-    r.pendingAnswer = null;
-    r.activePos++;
-    advanceCategoryTurn();
-  } else {
-    r.pendingAnswer = null;
-    eliminateTeam(teamIdx);
-  }
-}
-
 function renderCategoryRound() {
   const r = state.round;
   const activeTeamIdx = currentCategoryTeam();
   const activeTeam = state.teams[activeTeamIdx];
-  const eliminated = state.teams
-    .map((t, i) => i)
-    .filter(i => !r.alive.includes(i));
+  const eliminated = state.teams.map((t, i) => i).filter(i => !r.alive.includes(i));
 
   appEl.innerHTML = `
     ${boardHtml()}
@@ -518,47 +492,31 @@ function renderCategoryRound() {
         <div class="value">${escapeHtml(r.category)}</div>
       </div>
 
-      ${r.pendingAnswer ? `
-        <div class="pending-answer">
-          <div class="who">${escapeHtml(activeTeam.name)} says:</div>
-          <div class="what">"${escapeHtml(r.pendingAnswer)}"</div>
-          <div class="btn-row" style="justify-content:center;">
-            <button class="btn good" id="validBtn">✅ Valid</button>
-            <button class="btn danger" id="invalidBtn">❌ Invalid</button>
+      <div class="time-bank-row">
+        ${r.alive.map(i => `
+          <div class="time-bank-chip ${i === activeTeamIdx ? "active" : ""}" style="border-color:${state.teams[i].color}">
+            <span class="tb-name">${escapeHtml(state.teams[i].name)}</span>
+            <span class="tb-time">${Math.ceil(r.teamTimes[i])}s</span>
           </div>
-          <p class="hint">Other players judge: does it really fit the category?</p>
-        </div>
-      ` : `
-        <div class="timer-bar-outer"><div class="timer-bar-inner" id="catTimerBar" style="width:100%"></div></div>
-        <div class="turn-status" style="color:${activeTeam.color}">
-          <span id="catTimerNum">${Math.ceil(r.timeLeft)}</span>s — ${escapeHtml(activeTeam.name)}'s turn
-        </div>
-        <form class="answer-form" id="catAnswerForm">
-          <input type="text" id="catAnswerInput" autocomplete="off" placeholder="Type a movie title..." autofocus />
-          <button class="btn" type="submit">Submit</button>
-        </form>
-      `}
+        `).join("")}
+      </div>
 
-      ${r.given.length ? `<div class="given-answers">${r.given.map(g => `<span>${escapeHtml(g)}</span>`).join("")}</div>` : ""}
+      <div class="timer-bar-outer"><div class="timer-bar-inner" id="catTimerBar" style="width:100%"></div></div>
+      <div class="turn-status" style="color:${activeTeam.color}">
+        <span id="catTimerNum">${Math.ceil(r.teamTimes[activeTeamIdx])}</span>s left on ${escapeHtml(activeTeam.name)}'s clock
+      </div>
+      <p class="hint" style="text-align:center;">${escapeHtml(activeTeam.name)} calls out a movie that fits — everyone else judges it live.</p>
+
       ${eliminated.length ? `<div class="eliminated-list">Out: ${eliminated.map(i => escapeHtml(state.teams[i].name)).join(", ")}</div>` : ""}
 
-      <div class="btn-row">
-        <button class="btn small danger" id="forfeitBtn">${escapeHtml(activeTeam.name)} gives up this turn</button>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="btn good" id="passTurnBtn">✅ Got one — pass it on</button>
+        <button class="btn small danger" id="forfeitBtn">🏳 ${escapeHtml(activeTeam.name)} is out</button>
       </div>
     </div>
   `;
 
-  const form = document.getElementById("catAnswerForm");
-  if (form) {
-    form.addEventListener("submit", e => {
-      e.preventDefault();
-      submitCategoryAnswer(document.getElementById("catAnswerInput").value);
-    });
-  }
-  const validBtn = document.getElementById("validBtn");
-  if (validBtn) validBtn.addEventListener("click", () => resolvePendingAnswer(true));
-  const invalidBtn = document.getElementById("invalidBtn");
-  if (invalidBtn) invalidBtn.addEventListener("click", () => resolvePendingAnswer(false));
+  document.getElementById("passTurnBtn").addEventListener("click", passTurn);
   document.getElementById("forfeitBtn").addEventListener("click", () => {
     clearInterval(r.timerId);
     eliminateTeam(activeTeamIdx);
@@ -777,10 +735,11 @@ function howToPlayHtml() {
     <p>2 or more teams race to collect all ${GENRES.length} genre cards
       (${GENRES.map(g => `${GENRE_ICONS[g] || ""} ${g}`).join(", ")}). Each round, the group picks one of two mini-games:</p>
     <h3>🎬 Category Battle</h3>
-    <p>A category appears (e.g. "Movies set in space"). Teams take turns — one player at a time —
-      naming a movie that fits, before the timer runs out. If you repeat an answer already given,
-      run out of time, or the table votes your answer invalid, your team is out of the round.
-      Last team standing wins the round and a genre card.</p>
+    <p>A category appears (e.g. "Movies set in space"). It's a chess clock: each team gets its own
+      countdown bank, and only the active team's clock is running. Call out a movie that fits out loud —
+      no typing — and everyone else judges on the spot. Got one? Tap "pass it on" to hand the clock to the
+      next team. Let your own clock hit zero (or concede) and your team is out. Last team standing wins the
+      round and a genre card.</p>
     <h3>🤫 Quote It / One Word</h3>
     <p>One team picks a Clue Giver. Everyone else on the team looks away while the Clue Giver
       reveals a hidden movie on screen, then has one round-timer to get their teammates guessing —

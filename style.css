@@ -283,45 +283,44 @@ main#app {
   font-size: 1.1rem;
 }
 
-.answer-form {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.answer-form input {
-  flex: 1;
-  padding: 12px 14px;
-  font-size: 1.05rem;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-}
-.answer-form input:focus { border-color: var(--bb-blue); outline: none; }
-
-.pending-answer {
-  background: #fff8e1;
-  border: 2px solid var(--bb-yellow);
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 14px;
-  text-align: center;
-}
-.pending-answer .who { font-size: 0.8rem; color: var(--muted); }
-.pending-answer .what { font-size: 1.3rem; font-weight: 800; margin: 6px 0 12px; }
-
-.given-answers {
+.time-bank-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 18px;
 }
-.given-answers span {
-  background: #eee;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 0.8rem;
+.time-bank-chip {
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  padding: 8px 14px;
+  text-align: center;
+  min-width: 90px;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.time-bank-chip.active {
+  opacity: 1;
+  transform: scale(1.06);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+}
+.time-bank-chip .tb-name {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.time-bank-chip .tb-time {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
-.eliminated-list { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; }
+.eliminated-list { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; text-align: center; }
 
 /* ---------- Clue round ---------- */
 .clue-warning {
