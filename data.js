@@ -172,3 +172,71 @@ const MOVIES = [
   { title: "Zodiac", genre: "Thriller", quote: "I need to know who he is." },
   { title: "North by Northwest", genre: "Thriller", quote: "That plane is dusting crops where there ain't no crops." }
 ];
+
+// Categories for the TV Shows domain of "Category Battle".
+const TV_CATEGORIES = [
+  "Sitcoms",
+  "British sitcoms",
+  "TV shows set in a hospital",
+  "TV shows set in a school",
+  "Crime procedurals",
+  "TV shows with a talking or animated animal",
+  "Animated TV shows for adults",
+  "TV shows set in space",
+  "TV shows based on a book",
+  "TV shows with a will-they-won't-they couple",
+  "TV shows set in a prison",
+  "TV shows about a family business",
+  "TV shows with a twist you didn't see coming",
+  "TV shows set in New York City",
+  "TV shows that got cancelled too soon",
+  "TV shows with a musical episode",
+  "TV shows about doctors",
+  "TV shows about lawyers or courtrooms",
+  "TV shows set in high school",
+  "Reality TV shows",
+  "TV shows with a time jump",
+  "TV shows with a big ensemble cast",
+  "TV shows set in a workplace",
+  "TV shows with a spin-off",
+  "TV shows set in a small town",
+  "TV shows about superheroes",
+  "TV shows with a shocking series finale",
+  "Period dramas",
+  "TV shows about a heist or a con",
+  "Sketch comedy shows",
+  "Animated sitcoms",
+  "TV shows about zombies or an apocalypse",
+  "TV competition or game shows",
+  "TV shows with a UK version and a US remake",
+  "TV shows about spies or secret agents",
+  "TV shows with a fan-favorite villain",
+  "TV shows set in a fictional town"
+];
+
+// Hand-picked TV quotes for the TV domain of "Quote It / One Word".
+// Kept short (~12 words) and widely known, same spirit as the MOVIES list.
+const TV_QUOTES = [
+  { title: "Friends", genre: "Comedy", quote: "We were on a break!" },
+  { title: "The Office", genre: "Comedy", quote: "Bears. Beets. Battlestar Galactica." },
+  { title: "Seinfeld", genre: "Comedy", quote: "Not that there's anything wrong with that." },
+  { title: "Parks and Recreation", genre: "Comedy", quote: "Treat yo self." },
+  { title: "Brooklyn Nine-Nine", genre: "Comedy", quote: "Cool cool cool cool cool, no doubt." },
+  { title: "Breaking Bad", genre: "Thriller", quote: "I am the one who knocks." },
+  { title: "Peaky Blinders", genre: "Thriller", quote: "By order of the Peaky Blinders." },
+  { title: "Sherlock", genre: "Thriller", quote: "The game is on." },
+  { title: "Game of Thrones", genre: "Drama", quote: "Winter is coming." },
+  { title: "House", genre: "Drama", quote: "Everybody lies." },
+  { title: "Grey's Anatomy", genre: "Drama", quote: "It's a beautiful day to save lives." },
+  { title: "Stranger Things", genre: "Sci-Fi", quote: "Friends don't lie." },
+  { title: "Doctor Who", genre: "Sci-Fi", quote: "Allons-y!" },
+  { title: "The X-Files", genre: "Sci-Fi", quote: "The truth is out there." },
+  { title: "The Simpsons", genre: "Animation", quote: "D'oh!" },
+  { title: "SpongeBob SquarePants", genre: "Animation", quote: "Who lives in a pineapple under the sea?" },
+  { title: "Rick and Morty", genre: "Animation", quote: "Wubba lubba dub dub!" },
+  { title: "South Park", genre: "Animation", quote: "Oh my God, they killed Kenny!" },
+  { title: "The Walking Dead", genre: "Horror", quote: "We are the walking dead." },
+  { title: "Buffy the Vampire Slayer", genre: "Horror", quote: "Into every generation a slayer is born." },
+  { title: "Cobra Kai", genre: "Action", quote: "Strike first, strike hard, no mercy." },
+  { title: "Gossip Girl", genre: "Romance", quote: "You know you love me. XOXO." }
+];

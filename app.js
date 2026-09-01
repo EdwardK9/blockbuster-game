@@ -79,6 +79,7 @@ function snapshotGame() {
     winner: state.winner,
     history: state.history,
     roundNumber: state.roundNumber,
+    contentDomain: state.contentDomain,
   };
 }
 function saveGame() {
@@ -108,6 +109,7 @@ function restoreFromSnapshot(snap) {
   state.winner = typeof snap.winner === "number" ? snap.winner : null;
   state.history = snap.history || [];
   state.roundNumber = snap.roundNumber || (state.history ? state.history.length : 0);
+  state.contentDomain = snap.contentDomain === "tv" ? "tv" : "movies";
   state.round = null;
   state.screen = state.winner !== null ? "winner" : "board";
 }
@@ -131,6 +133,7 @@ function initState(keepSettings) {
     history: [],
     roundNumber: 0,
     settings,
+    contentDomain: "movies",
   };
 }
 
@@ -143,17 +146,31 @@ function shuffledCopy(arr) {
   return a;
 }
 
-function pickCategory() {
-  if (state.usedCategories.length >= CATEGORIES.length) state.usedCategories = [];
-  const remaining = CATEGORIES.filter(c => !state.usedCategories.includes(c));
+// Category Battle draws from a hand-written list per content domain (no bulk
+// dataset needed — it's just prompt text, judged by the room).
+function categoriesForDomain(domain) {
+  return domain === "tv" ? TV_CATEGORIES : CATEGORIES;
+}
+// Quote It / One Word draws from a merged pool: hand-curated titles that
+// come with a real quote, plus the much larger IMDb-sourced pool (title +
+// genre only, no quote — those lean on the one-word/acting clue styles).
+function cluePoolForDomain(domain) {
+  if (domain === "tv") return [...TV_QUOTES, ...(typeof TV_SHOWS !== "undefined" ? TV_SHOWS : [])];
+  return [...MOVIES, ...(typeof MOVIES_LARGE !== "undefined" ? MOVIES_LARGE : [])];
+}
+
+function pickCategory(domain) {
+  const list = categoriesForDomain(domain);
+  if (state.usedCategories.length >= list.length) state.usedCategories = [];
+  const remaining = list.filter(c => !state.usedCategories.includes(c));
   const pick = remaining[Math.floor(Math.random() * remaining.length)];
   state.usedCategories.push(pick);
   return pick;
 }
 
-function pickMovies(count) {
-  if (state.usedMovies.length + count > MOVIES.length) state.usedMovies = [];
-  const remaining = MOVIES.filter(m => !state.usedMovies.includes(m.title));
+function pickMovies(pool, count) {
+  if (state.usedMovies.length + count > pool.length) state.usedMovies = [];
+  const remaining = pool.filter(m => !state.usedMovies.includes(m.title));
   const picks = shuffledCopy(remaining).slice(0, count);
   picks.forEach(p => state.usedMovies.push(p.title));
   return picks;
@@ -191,6 +208,7 @@ function render() {
   if (state.screen === "board") return renderBoard();
   if (state.screen === "category") return renderCategoryRound();
   if (state.screen === "clue") return renderClueRound();
+  if (state.screen === "trivia") return renderTriviaRound();
   if (state.screen === "roundResult") return renderRoundResult();
 }
 
@@ -321,26 +339,48 @@ function renderSetup() {
 
 // ---------------- Board / round chooser ----------------
 function renderBoard() {
+  const domain = state.contentDomain;
+  const domainLabel = domain === "tv" ? "TV shows" : "movies";
+  const domainIcon = domain === "tv" ? "📺" : "🎬";
+
   appEl.innerHTML = `
     ${boardHtml()}
     <div class="card">
       <h2>Choose the next round</h2>
       <p class="hint">Acting team / first turn rotates automatically each round.</p>
+
+      <p class="hint" style="margin-top:0;">Content for Category Battle &amp; Quote It / One Word:</p>
+      <div class="pill-row" id="domainRow" style="margin-bottom:18px;">
+        <button class="pill ${domain === "movies" ? "selected" : ""}" data-domain="movies">🎬 Movies</button>
+        <button class="pill ${domain === "tv" ? "selected" : ""}" data-domain="tv">📺 TV Shows</button>
+      </div>
+
       <div class="round-choice-grid">
         <div class="round-choice" id="chooseCategoryBtn">
-          <h3>🎬 Category Battle</h3>
-          <p>Teams call out movies fitting a category, chess-clock style — each team has its own ${state.settings.turnSeconds}s bank that only runs on their turn. Say one and pass it on; run your clock to zero and you're out. Last team standing wins a genre card.</p>
+          <h3>${domainIcon} Category Battle</h3>
+          <p>Teams call out ${domainLabel} fitting a category, chess-clock style — each team has its own ${state.settings.turnSeconds}s bank that only runs on their turn. Say one and pass it on; run your clock to zero and you're out. Last team standing wins a genre card.</p>
         </div>
         <div class="round-choice" id="chooseClueBtn">
           <h3>🤫 Quote It / One Word</h3>
-          <p>One team's Clue Giver gets ${state.settings.clueSeconds} seconds to get their team guessing 3 movies — by quote, one-word clue, or acting it out. Each correct guess wins a genre card.</p>
+          <p>One team's Clue Giver gets ${state.settings.clueSeconds} seconds to get their team guessing 3 ${domainLabel} — by quote (where we have one), one-word clue, or acting it out. Each correct guess wins a genre card.</p>
+        </div>
+        <div class="round-choice" id="chooseTriviaBtn">
+          <h3>🏆 Which Came First?</h3>
+          <p>Two titles, one question: which came out earlier? Mixes movies and TV. Get it right and win a genre card — no timer, just knowledge (or a good guess).</p>
         </div>
       </div>
     </div>
     ${historyHtml()}
   `;
-  document.getElementById("chooseCategoryBtn").addEventListener("click", startCategoryRound);
-  document.getElementById("chooseClueBtn").addEventListener("click", startClueRound);
+  document.getElementById("chooseCategoryBtn").addEventListener("click", () => startCategoryRound(domain));
+  document.getElementById("chooseClueBtn").addEventListener("click", () => startClueRound(domain));
+  document.getElementById("chooseTriviaBtn").addEventListener("click", startTriviaRound);
+  document.getElementById("domainRow").querySelectorAll(".pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.contentDomain = btn.dataset.domain;
+      renderBoard();
+    });
+  });
 }
 
 function boardHtml() {
@@ -376,13 +416,14 @@ function historyHtml() {
 // round. Only the active team's clock runs. Players just call out movies
 // out loud (no typing) — tap "Got one, pass it on" to hand the clock to the
 // next team, or a team is out the moment its own bank hits zero.
-function startCategoryRound() {
+function startCategoryRound(domain) {
   const startTeam = state.turnPointer % state.teamCount;
   const teamTimes = {};
   state.teams.forEach((_, i) => { teamTimes[i] = state.settings.turnSeconds; });
   state.round = {
     type: "category",
-    category: pickCategory(),
+    domain,
+    category: pickCategory(domain),
     alive: state.teams.map((_, i) => i),
     activePos: 0,
     startTeam,
@@ -470,7 +511,8 @@ function finishCategoryRound() {
   const genre = GENRES[Math.floor(Math.random() * GENRES.length)];
   const given = awardGenre(winnerTeam, genre);
   playRoundWin();
-  addHistory(`<strong>${escapeHtml(winnerName)}</strong> won Category Battle ("${escapeHtml(r.category)}")` +
+  const label = r.domain === "tv" ? "Category Battle (TV)" : "Category Battle";
+  addHistory(`<strong>${escapeHtml(winnerName)}</strong> won ${label} ("${escapeHtml(r.category)}")` +
     (given ? ` and earned <strong>${given}</strong>` : " (already had every genre)"));
   state.turnPointer = (r.startTeam + 1) % state.teamCount;
   state.lastAward = { teamIdx: winnerTeam, genre: given, roundType: "category" };
@@ -505,7 +547,7 @@ function renderCategoryRound() {
       <div class="turn-status" style="color:${activeTeam.color}">
         <span id="catTimerNum">${Math.ceil(r.teamTimes[activeTeamIdx])}</span>s left on ${escapeHtml(activeTeam.name)}'s clock
       </div>
-      <p class="hint" style="text-align:center;">${escapeHtml(activeTeam.name)} calls out a movie that fits — everyone else judges it live.</p>
+      <p class="hint" style="text-align:center;">${escapeHtml(activeTeam.name)} calls out a ${r.domain === "tv" ? "TV show" : "movie"} that fits — everyone else judges it live.</p>
 
       ${eliminated.length ? `<div class="eliminated-list">Out: ${eliminated.map(i => escapeHtml(state.teams[i].name)).join(", ")}</div>` : ""}
 
@@ -524,12 +566,13 @@ function renderCategoryRound() {
 }
 
 // ---------------- Clue round ----------------
-function startClueRound() {
+function startClueRound(domain) {
   const actingTeam = state.turnPointer % state.teamCount;
   state.round = {
     type: "clue",
+    domain,
     actingTeam,
-    movies: pickMovies(3),
+    movies: pickMovies(cluePoolForDomain(domain), 3),
     idx: 0,
     correct: 0,
     revealed: false,
@@ -605,7 +648,8 @@ function finishClueRound() {
   }
   if (r.correct > 0) playRoundWin();
   const teamName = state.teams[r.actingTeam].name;
-  addHistory(`<strong>${escapeHtml(teamName)}</strong> guessed ${r.correct}/${r.movies.length} in Quote It / One Word` +
+  const label = r.domain === "tv" ? "Quote It / One Word (TV)" : "Quote It / One Word";
+  addHistory(`<strong>${escapeHtml(teamName)}</strong> guessed ${r.correct}/${r.movies.length} in ${label}` +
     (awarded.length ? ` and earned: <strong>${awarded.join(", ")}</strong>` : ""));
   state.turnPointer = (r.actingTeam + 1) % state.teamCount;
   state.lastAward = { teamIdx: r.actingTeam, genres: awarded, roundType: "clue", correct: r.correct, total: r.movies.length };
@@ -617,6 +661,8 @@ function renderClueRound() {
   const r = state.round;
   const team = state.teams[r.actingTeam];
   const movie = r.movies[r.idx];
+  const domainWord = r.domain === "tv" ? "TV shows" : "movies";
+  const domainIcon = r.domain === "tv" ? "📺" : "🎬";
 
   if (!r.started) {
     appEl.innerHTML = `
@@ -624,7 +670,7 @@ function renderClueRound() {
       <div class="card">
         <h2>🤫 Quote It / One Word — ${escapeHtml(team.name)}'s turn</h2>
         <div class="clue-warning">Pick one Clue Giver from ${escapeHtml(team.name)}. Only they should look at the next screen! Everyone else, look away.</div>
-        <p>The Clue Giver has ${state.settings.clueSeconds} seconds to get their team to guess 3 movies by reading the quote, saying one word, or acting it out (no title, no spelling, no "sounds like").</p>
+        <p>The Clue Giver has ${state.settings.clueSeconds} seconds to get their team to guess 3 ${domainWord} by reading the quote (where there is one), saying one word, or acting it out (no title, no spelling, no "sounds like").</p>
         <button class="btn" id="clueReadyBtn">Clue Giver is ready — Start ${state.settings.clueSeconds}s Timer</button>
       </div>
     `;
@@ -642,11 +688,13 @@ function renderClueRound() {
       </div>
       <div class="flip-card ${r.revealed ? "" : "hidden-card"}" id="flipCard">
         ${r.revealed ? `
-          <div class="movie-genre">${GENRE_ICONS[movie.genre] || ""} ${movie.genre}</div>
+          <div class="movie-genre">${GENRE_ICONS[movie.genre] || ""} ${movie.genre}${movie.year ? ` &middot; ${movie.year}` : ""}</div>
           <div class="movie-title">${escapeHtml(movie.title)}</div>
-          <div class="movie-quote">"${escapeHtml(movie.quote)}"</div>
+          ${movie.quote
+            ? `<div class="movie-quote">"${escapeHtml(movie.quote)}"</div>`
+            : `<div class="movie-quote no-quote">No quote on file — one word or act it out only!</div>`}
         ` : `
-          <div class="movie-title">🎬 Tap to reveal to Clue Giver only</div>
+          <div class="movie-title">${domainIcon} Tap to reveal to Clue Giver only</div>
         `}
       </div>
       <div class="btn-row" style="justify-content:center;">
@@ -663,6 +711,110 @@ function renderClueRound() {
   document.getElementById("clueSkipBtn").addEventListener("click", skipMovie);
 }
 
+// ---------------- Which Came First? (trivia round) ----------------
+// No timer, no typing: two titles (mixing movies + TV, pulled from the
+// large IMDb-sourced pools since those carry release years), the team
+// whose turn it is calls which one came out first.
+function triviaPool() {
+  const movies = typeof MOVIES_LARGE !== "undefined" ? MOVIES_LARGE : [];
+  const tv = typeof TV_SHOWS !== "undefined" ? TV_SHOWS : [];
+  return [...movies, ...tv];
+}
+
+function startTriviaRound() {
+  const pool = triviaPool();
+  let itemA, itemB;
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const picks = shuffledCopy(pool).slice(0, 2);
+    if (picks.length === 2 && picks[0].year !== picks[1].year && picks[0].title !== picks[1].title) {
+      [itemA, itemB] = picks;
+      break;
+    }
+  }
+  if (!itemA || !itemB) return; // pool too small / exhausted — silently no-op
+  const teamIdx = state.turnPointer % state.teamCount;
+  state.round = { type: "trivia", teamIdx, itemA, itemB, revealed: false };
+  state.screen = "trivia";
+  render();
+}
+
+function guessTrivia(guessedEarlier) {
+  const r = state.round;
+  if (r.revealed) return;
+  r.revealed = true;
+  const earlier = r.itemA.year <= r.itemB.year ? r.itemA : r.itemB;
+  r.correct = guessedEarlier === earlier;
+  render();
+}
+
+function finishTriviaRound() {
+  const r = state.round;
+  const teamName = state.teams[r.teamIdx].name;
+  const earlier = r.itemA.year <= r.itemB.year ? r.itemA : r.itemB;
+  let given = null;
+  if (r.correct) {
+    given = awardGenre(r.teamIdx, earlier.genre);
+    playRoundWin();
+  }
+  addHistory(`<strong>${escapeHtml(teamName)}</strong> ${r.correct ? "got it right" : "got it wrong"} in Which Came First?` +
+    (given ? ` and earned <strong>${given}</strong>` : ""));
+  state.turnPointer = (r.teamIdx + 1) % state.teamCount;
+  state.lastAward = { teamIdx: r.teamIdx, genre: given, roundType: "trivia", correct: r.correct };
+  if (state.screen !== "winner") state.screen = "roundResult";
+  render();
+}
+
+function renderTriviaRound() {
+  const r = state.round;
+  const team = state.teams[r.teamIdx];
+  const earlier = r.itemA.year <= r.itemB.year ? r.itemA : r.itemB;
+
+  function cardHtml(item, side) {
+    const revealedYear = r.revealed
+      ? `<div class="trivia-year">${item.year}${item === earlier ? " — earlier!" : ""}</div>`
+      : "";
+    return `
+      <button class="trivia-card ${r.revealed && item === earlier ? "trivia-correct" : ""}" data-side="${side}" ${r.revealed ? "disabled" : ""}>
+        <div class="trivia-genre">${GENRE_ICONS[item.genre] || ""} ${item.genre}</div>
+        <div class="trivia-title">${escapeHtml(item.title)}</div>
+        ${revealedYear}
+      </button>
+    `;
+  }
+
+  appEl.innerHTML = `
+    ${boardHtml()}
+    <div class="card">
+      <h2 style="text-align:center;">🏆 Which Came First? — ${escapeHtml(team.name)}'s turn</h2>
+      <p class="hint" style="text-align:center;">Tap the one you think came out earlier.</p>
+      <div class="trivia-grid">
+        ${cardHtml(r.itemA, "A")}
+        <div class="trivia-vs">vs</div>
+        ${cardHtml(r.itemB, "B")}
+      </div>
+      ${r.revealed ? `
+        <p style="text-align:center; margin-top:16px;">
+          ${r.correct ? "✅ Correct!" : "❌ Not quite."}
+        </p>
+        <div class="btn-row" style="justify-content:center;">
+          <button class="btn" id="triviaContinueBtn">Continue</button>
+        </div>
+      ` : ""}
+    </div>
+  `;
+
+  if (!r.revealed) {
+    appEl.querySelectorAll(".trivia-card").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const chosen = btn.dataset.side === "A" ? r.itemA : r.itemB;
+        guessTrivia(chosen);
+      });
+    });
+  } else {
+    document.getElementById("triviaContinueBtn").addEventListener("click", finishTriviaRound);
+  }
+}
+
 // ---------------- Round result / winner ----------------
 function renderRoundResult() {
   const a = state.lastAward;
@@ -672,6 +824,11 @@ function renderRoundResult() {
     body = a.genre
       ? `<p><strong>${escapeHtml(team.name)}</strong> wins the round and earns the <strong>${GENRE_ICONS[a.genre] || ""} ${a.genre}</strong> genre card!</p>`
       : `<p><strong>${escapeHtml(team.name)}</strong> already has every genre card.</p>`;
+  } else if (a.roundType === "trivia") {
+    body = a.correct
+      ? `<p><strong>${escapeHtml(team.name)}</strong> called it right` +
+        (a.genre ? ` and earns the <strong>${GENRE_ICONS[a.genre] || ""} ${a.genre}</strong> genre card!</p>` : " — but already has every genre card.</p>")
+      : `<p><strong>${escapeHtml(team.name)}</strong> guessed wrong this time — no genre card.</p>`;
   } else {
     body = `<p><strong>${escapeHtml(team.name)}</strong> guessed ${a.correct} / ${a.total} movies` +
       (a.genres.length ? ` and earned: <strong>${a.genres.map(g => `${GENRE_ICONS[g] || ""} ${g}`).join(", ")}</strong>.` : ".") + `</p>`;
@@ -733,18 +890,26 @@ function howToPlayHtml() {
   return `
     <h2>How to Play</h2>
     <p>2 or more teams race to collect all ${GENRES.length} genre cards
-      (${GENRES.map(g => `${GENRE_ICONS[g] || ""} ${g}`).join(", ")}). Each round, the group picks one of two mini-games:</p>
+      (${GENRES.map(g => `${GENRE_ICONS[g] || ""} ${g}`).join(", ")}). Each round, the group picks a mode:</p>
+    <h3>🎬📺 Movies or TV Shows</h3>
+    <p>Category Battle and Quote It / One Word can both run on either content pool — toggle
+      "Movies" / "TV Shows" on the board before picking a round. Movie clues lean on a bigger
+      hand-picked quote collection; TV has a smaller quote set plus hundreds more shows for
+      one-word/acting clues.</p>
     <h3>🎬 Category Battle</h3>
     <p>A category appears (e.g. "Movies set in space"). It's a chess clock: each team gets its own
-      countdown bank, and only the active team's clock is running. Call out a movie that fits out loud —
+      countdown bank, and only the active team's clock is running. Call out a title that fits out loud —
       no typing — and everyone else judges on the spot. Got one? Tap "pass it on" to hand the clock to the
       next team. Let your own clock hit zero (or concede) and your team is out. Last team standing wins the
       round and a genre card.</p>
     <h3>🤫 Quote It / One Word</h3>
     <p>One team picks a Clue Giver. Everyone else on the team looks away while the Clue Giver
-      reveals a hidden movie on screen, then has one round-timer to get their teammates guessing —
-      by reciting the quote, giving a single-word clue, or acting it out charades-style. No saying
-      the title, spelling it, or "sounds like". Each of the 3 movies guessed correctly wins a genre card.</p>
+      reveals a hidden title on screen, then has one round-timer to get their teammates guessing —
+      by reciting the quote (where there is one), giving a single-word clue, or acting it out charades-style.
+      No saying the title, spelling it, or "sounds like". Each of the 3 titles guessed correctly wins a genre card.</p>
+    <h3>🏆 Which Came First?</h3>
+    <p>No timer. Two titles (movies and TV shows mixed together) appear side by side — tap the one you
+      think was released earlier. Get it right and win a genre card for that title's genre.</p>
     <h3>Winning</h3>
     <p>First team to collect all ${GENRES.length} distinct genre cards wins the game.</p>
     <p class="hint">Fan-made browser tribute to the <em>Blockbuster</em> party game — play it with friends in the same room.</p>

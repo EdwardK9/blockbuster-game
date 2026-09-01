@@ -1,6 +1,6 @@
 FROM nginx:alpine
 
-COPY index.html style.css app.js data.js /usr/share/nginx/html/
+COPY index.html style.css app.js data.js data-generated.js /usr/share/nginx/html/
 
 EXPOSE 80
 
