@@ -1,0 +1,8 @@
+services:
+  blockbuster-game:
+    build: .
+    image: blockbuster-game:latest
+    container_name: blockbuster-game
+    restart: unless-stopped
+    ports:
+      - "8089:80"

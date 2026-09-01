@@ -1,0 +1,92 @@
+// Data for Blockbuster: The Movie Game
+// GENRES are the 8 "genre cards" teams collect to win.
+const GENRES = [
+  "Action", "Comedy", "Horror", "Romance",
+  "Sci-Fi", "Animation", "Drama", "Thriller"
+];
+
+// Categories for the "Category Battle" round (head-to-head naming race).
+// No answer database is needed — players self-judge (honor system / group vote),
+// same as playing the physical party game.
+const CATEGORIES = [
+  "Movies with a dog in them",
+  "Movies set in space",
+  "Movies with a color in the title",
+  "Movies with a number in the title",
+  "Christmas movies",
+  "Movies based on a true story",
+  "Time travel movies",
+  "Superhero movies",
+  "Movies set in New York City",
+  "Zombie or monster movies",
+  "Movies with a wedding scene",
+  "Movies with a one-word title",
+  "Heist movies",
+  "Movies that made you cry",
+  "Movies with a talking animal",
+  "Movies set during a war",
+  "Movies with a twist ending",
+  "Movies set at high school",
+  "Movies with a robot or AI character",
+  "Movies set on a boat or ship",
+  "Movies with a car chase",
+  "Movies with a famous villain",
+  "Movies set in a hotel",
+  "Movies that take place in one day",
+  "Movies with a musical number"
+];
+
+// Movies for the "Quote It / One Word" clue round.
+// Each has a short, well-known quote (kept under ~12 words) and a genre.
+const MOVIES = [
+  { title: "Star Wars", genre: "Sci-Fi", quote: "May the Force be with you." },
+  { title: "Jaws", genre: "Thriller", quote: "You're gonna need a bigger boat." },
+  { title: "The Wizard of Oz", genre: "Drama", quote: "There's no place like home." },
+  { title: "Toy Story", genre: "Animation", quote: "To infinity and beyond!" },
+  { title: "The Lion King", genre: "Animation", quote: "Hakuna Matata." },
+  { title: "Forrest Gump", genre: "Drama", quote: "Life is like a box of chocolates." },
+  { title: "The Terminator", genre: "Action", quote: "I'll be back." },
+  { title: "Jurassic Park", genre: "Action", quote: "Life finds a way." },
+  { title: "Titanic", genre: "Romance", quote: "I'm the king of the world!" },
+  { title: "The Godfather", genre: "Drama", quote: "I'm gonna make him an offer he can't refuse." },
+  { title: "Rocky", genre: "Drama", quote: "Yo, Adrian!" },
+  { title: "Ghostbusters", genre: "Comedy", quote: "Who you gonna call?" },
+  { title: "Dirty Dancing", genre: "Romance", quote: "Nobody puts Baby in a corner." },
+  { title: "The Shining", genre: "Horror", quote: "Here's Johnny!" },
+  { title: "Psycho", genre: "Horror", quote: "A boy's best friend is his mother." },
+  { title: "Finding Nemo", genre: "Animation", quote: "Just keep swimming." },
+  { title: "The Dark Knight", genre: "Action", quote: "Why so serious?" },
+  { title: "Frozen", genre: "Animation", quote: "Let it go." },
+  { title: "Jerry Maguire", genre: "Romance", quote: "Show me the money!" },
+  { title: "Field of Dreams", genre: "Drama", quote: "If you build it, he will come." },
+  { title: "A Few Good Men", genre: "Drama", quote: "You can't handle the truth!" },
+  { title: "Taxi Driver", genre: "Thriller", quote: "You talkin' to me?" },
+  { title: "E.T. the Extra-Terrestrial", genre: "Sci-Fi", quote: "E.T. phone home." },
+  { title: "Apollo 13", genre: "Drama", quote: "Houston, we have a problem." },
+  { title: "Alien", genre: "Horror", quote: "In space no one can hear you scream." },
+  { title: "Scarface", genre: "Action", quote: "Say hello to my little friend!" },
+  { title: "Casablanca", genre: "Romance", quote: "Here's looking at you, kid." },
+  { title: "The Silence of the Lambs", genre: "Horror", quote: "Hello, Clarice." },
+  { title: "Home Alone", genre: "Comedy", quote: "Keep the change, ya filthy animal." },
+  { title: "Anchorman", genre: "Comedy", quote: "Stay classy, San Diego." },
+  { title: "Napoleon Dynamite", genre: "Comedy", quote: "Vote for Pedro." },
+  { title: "Mean Girls", genre: "Comedy", quote: "On Wednesdays we wear pink." },
+  { title: "The Matrix", genre: "Sci-Fi", quote: "There is no spoon." },
+  { title: "Back to the Future", genre: "Sci-Fi", quote: "Great Scott!" },
+  { title: "Independence Day", genre: "Sci-Fi", quote: "Welcome to Earth." },
+  { title: "Gladiator", genre: "Action", quote: "Are you not entertained?" },
+  { title: "Braveheart", genre: "Action", quote: "They may take our lives, but never our freedom!" },
+  { title: "Top Gun", genre: "Action", quote: "I feel the need... the need for speed." },
+  { title: "The Sixth Sense", genre: "Thriller", quote: "I see dead people." },
+  { title: "Se7en", genre: "Thriller", quote: "What's in the box?" },
+  { title: "Fight Club", genre: "Thriller", quote: "The first rule of Fight Club is..." },
+  { title: "Notting Hill", genre: "Romance", quote: "I'm just a girl, standing in front of a boy." },
+  { title: "When Harry Met Sally", genre: "Romance", quote: "I'll have what she's having." },
+  { title: "Shrek", genre: "Animation", quote: "Ogres are like onions." },
+  { title: "Up", genre: "Animation", quote: "Adventure is out there!" },
+  { title: "The Incredibles", genre: "Animation", quote: "No capes!" },
+  { title: "Get Out", genre: "Horror", quote: "Just get out." },
+  { title: "A Nightmare on Elm Street", genre: "Horror", quote: "One, two, Freddy's coming for you." },
+  { title: "Halloween", genre: "Horror", quote: "It was the boogeyman." },
+  { title: "Anchorman 2", genre: "Comedy", quote: "I'm kind of a big deal." }
+];
