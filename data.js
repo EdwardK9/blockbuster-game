@@ -5,6 +5,11 @@ const GENRES = [
   "Sci-Fi", "Animation", "Drama", "Thriller"
 ];
 
+const GENRE_ICONS = {
+  Action: "💥", Comedy: "😂", Horror: "🔪", Romance: "❤️",
+  "Sci-Fi": "🚀", Animation: "🎨", Drama: "🎭", Thriller: "🕵️"
+};
+
 // Categories for the "Category Battle" round (head-to-head naming race).
 // No answer database is needed — players self-judge (honor system / group vote),
 // same as playing the physical party game.
@@ -33,11 +38,39 @@ const CATEGORIES = [
   "Movies with a famous villain",
   "Movies set in a hotel",
   "Movies that take place in one day",
-  "Movies with a musical number"
+  "Movies with a musical number",
+  "Movies with a sequel (or more)",
+  "Movies set in the future",
+  "Movies with an animal in the title",
+  "Movies about sports",
+  "Movies set at Halloween",
+  "Movies with a famous plot twist you didn't see coming",
+  "Movies with a food-related title",
+  "Movies set in a school",
+  "Movies with a body-swap or identity switch",
+  "Movies about a road trip",
+  "Movies with a countdown or ticking clock",
+  "Movies with a fictional country or planet",
+  "Movies about aliens invading Earth",
+  "Movies with an ensemble cast",
+  "Movies with a famous car",
+  "Movies set underwater or on the ocean",
+  "Movies with a haunted house",
+  "Movies about someone getting revenge",
+  "Movies with a prison or jailbreak",
+  "Movies with a famous soundtrack",
+  "Movies with a superhero team",
+  "Movies where the villain wins (or almost does)",
+  "Movies with a chosen one / prophecy",
+  "Movies set in ancient times",
+  "Movies with a love triangle",
+  "Movies where someone is trapped somewhere"
 ];
 
 // Movies for the "Quote It / One Word" clue round.
 // Each has a short, well-known quote (kept under ~12 words) and a genre.
+// clueTypes lists which clue styles work for this movie; the game randomly
+// assigns one of these to the round so play varies (quote / one word / act it out).
 const MOVIES = [
   { title: "Star Wars", genre: "Sci-Fi", quote: "May the Force be with you." },
   { title: "Jaws", genre: "Thriller", quote: "You're gonna need a bigger boat." },
@@ -88,5 +121,54 @@ const MOVIES = [
   { title: "Get Out", genre: "Horror", quote: "Just get out." },
   { title: "A Nightmare on Elm Street", genre: "Horror", quote: "One, two, Freddy's coming for you." },
   { title: "Halloween", genre: "Horror", quote: "It was the boogeyman." },
-  { title: "Anchorman 2", genre: "Comedy", quote: "I'm kind of a big deal." }
+  { title: "Anchorman 2", genre: "Comedy", quote: "I'm kind of a big deal." },
+  { title: "The Avengers", genre: "Action", quote: "That's my secret — I'm always angry." },
+  { title: "Iron Man", genre: "Action", quote: "I am Iron Man." },
+  { title: "Die Hard", genre: "Action", quote: "Yippee-ki-yay." },
+  { title: "Mad Max: Fury Road", genre: "Action", quote: "What a lovely day!" },
+  { title: "John Wick", genre: "Action", quote: "People keep asking if I'm back." },
+  { title: "Superbad", genre: "Comedy", quote: "I am McLovin." },
+  { title: "Bridesmaids", genre: "Comedy", quote: "Help me, I'm poor." },
+  { title: "Step Brothers", genre: "Comedy", quote: "Did we just become best friends?" },
+  { title: "Dumb and Dumber", genre: "Comedy", quote: "So you're telling me there's a chance." },
+  { title: "The Hangover", genre: "Comedy", quote: "What happens in Vegas stays in Vegas." },
+  { title: "Zombieland", genre: "Comedy", quote: "Rule number one: cardio." },
+  { title: "Hereditary", genre: "Horror", quote: "I am your mother!" },
+  { title: "It", genre: "Horror", quote: "You'll float too." },
+  { title: "The Exorcist", genre: "Horror", quote: "The power of Christ compels you." },
+  { title: "A Quiet Place", genre: "Horror", quote: "If they hear you, they hunt you." },
+  { title: "Scream", genre: "Horror", quote: "What's your favorite scary movie?" },
+  { title: "The Ring", genre: "Horror", quote: "Seven days." },
+  { title: "The Notebook", genre: "Romance", quote: "If you're a bird, I'm a bird." },
+  { title: "Pretty Woman", genre: "Romance", quote: "Big mistake. Big. Huge." },
+  { title: "La La Land", genre: "Romance", quote: "Here's to the fools who dream." },
+  { title: "Love Actually", genre: "Romance", quote: "To me, you are perfect." },
+  { title: "Twilight", genre: "Romance", quote: "And so the lion fell in love with the lamb." },
+  { title: "500 Days of Summer", genre: "Romance", quote: "This is not a love story." },
+  { title: "Interstellar", genre: "Sci-Fi", quote: "Love transcends dimensions of time and space." },
+  { title: "Inception", genre: "Sci-Fi", quote: "We need to go deeper." },
+  { title: "Blade Runner", genre: "Sci-Fi", quote: "Tears in rain." },
+  { title: "Men in Black", genre: "Sci-Fi", quote: "I make this look good." },
+  { title: "Guardians of the Galaxy", genre: "Sci-Fi", quote: "I am Groot." },
+  { title: "Arrival", genre: "Sci-Fi", quote: "Now I remember your entire life." },
+  { title: "Spider-Man: Into the Spider-Verse", genre: "Animation", quote: "Anyone can wear the mask." },
+  { title: "Moana", genre: "Animation", quote: "The ocean chose you." },
+  { title: "Coco", genre: "Animation", quote: "Remember me." },
+  { title: "Inside Out", genre: "Animation", quote: "Take her to the moon for me." },
+  { title: "Wall-E", genre: "Animation", quote: "Directive." },
+  { title: "How to Train Your Dragon", genre: "Animation", quote: "This changes everything." },
+  { title: "Ratatouille", genre: "Animation", quote: "Anyone can cook." },
+  { title: "The Shawshank Redemption", genre: "Drama", quote: "Get busy living, or get busy dying." },
+  { title: "Good Will Hunting", genre: "Drama", quote: "It's not your fault." },
+  { title: "Dead Poets Society", genre: "Drama", quote: "Carpe diem." },
+  { title: "A Star Is Born", genre: "Drama", quote: "I just wanted to take another look at you." },
+  { title: "The Pursuit of Happyness", genre: "Drama", quote: "Don't ever let somebody tell you you can't do something." },
+  { title: "12 Angry Men", genre: "Drama", quote: "It's not easy to raise my hand and send a boy off to die." },
+  { title: "Whiplash", genre: "Drama", quote: "Not quite my tempo." },
+  { title: "No Country for Old Men", genre: "Thriller", quote: "Call it, friendo." },
+  { title: "Gone Girl", genre: "Thriller", quote: "I'm the cool girl." },
+  { title: "Shutter Island", genre: "Thriller", quote: "Which would be worse — to live as a monster or die as a good man?" },
+  { title: "Parasite", genre: "Thriller", quote: "It's so metaphorical." },
+  { title: "Zodiac", genre: "Thriller", quote: "I need to know who he is." },
+  { title: "North by Northwest", genre: "Thriller", quote: "That plane is dusting crops where there ain't no crops." }
 ];

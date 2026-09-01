@@ -9,15 +9,28 @@ Play it hotseat-style on one screen with everyone in the room — no accounts, n
 (Action, Comedy, Horror, Romance, Sci-Fi, Animation, Drama, Thriller). Each round, pick one of two mini-games:
 
 - **🎬 Category Battle** — Teams take turns naming a movie that fits a category
-  (e.g. "Movies set in space") before a 12-second timer runs out. Repeat an
-  answer, stall out, or get called out as invalid by the table and you're out.
-  Last team standing wins the round and a genre card.
-- **🤫 Quote It / One Word** — One team picks a Clue Giver, who has 30 seconds
-  to get their team guessing 3 hidden movies using a famous quote, a single
-  word, or acting it out (no title, no spelling). Every correct guess wins a
-  genre card.
+  (e.g. "Movies set in space", one of 50+ categories) before the turn timer
+  runs out. Repeat an answer, stall out, or get called out as invalid by the
+  table and you're out. Last team standing wins the round and a genre card.
+- **🤫 Quote It / One Word** — One team picks a Clue Giver, who gets the round
+  timer to get their team guessing 3 hidden movies (from a pool of ~100) using
+  a famous quote, a single word, or acting it out (no title, no spelling).
+  Every correct guess wins a genre card.
 
 First team to collect all 8 genre cards wins.
+
+## Features
+
+- **In-browser rules reference** — the ❓ button opens a full How to Play modal any time.
+- **Adjustable timers** — pick the Category Battle turn length (8/12/16s) and
+  the clue round length (20/30/45s) before you start.
+- **Custom team colors** — click a team's swatch on setup to cycle its color.
+- **2–6 teams** — add or remove teams freely; turn order rotates fairly.
+- **Round history** — a running log of who won what and which genre they earned.
+- **Save & resume** — progress is saved to your browser automatically; refreshing
+  mid-game offers to resume where you left off (never mid-timer, so nothing feels stuck).
+- **Sound & confetti** — light beeps for turn timers/correct guesses/round wins
+  (mute with the 🔊 button) and a confetti celebration on the win screen.
 
 ## Run it locally
 

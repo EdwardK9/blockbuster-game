@@ -52,6 +52,8 @@ html, body {
   text-transform: uppercase;
 }
 
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+
 .ghost-btn {
   background: transparent;
   border: 2px solid var(--bb-yellow);
@@ -62,6 +64,21 @@ html, body {
   font-weight: 700;
 }
 .ghost-btn:hover { background: var(--bb-yellow); color: var(--bb-blue-dark); }
+
+.icon-btn {
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.3);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.2); }
 
 main#app {
   max-width: 980px;
@@ -132,7 +149,27 @@ main#app {
   margin-bottom: 12px;
 }
 .team-swatch {
-  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid rgba(0,0,0,0.15);
+  cursor: pointer;
+  padding: 0;
+}
+.team-swatch:hover { transform: scale(1.1); }
+
+.pill-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill {
+  border: 2px solid #ddd;
+  background: white;
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--ink);
+}
+.pill.selected {
+  border-color: var(--bb-blue);
+  background: var(--bb-blue);
+  color: white;
 }
 .team-name-input input {
   flex: 1;
@@ -364,3 +401,84 @@ main#app {
 .trophy { font-size: 4rem; }
 
 .hint { color: var(--muted); font-size: 0.85rem; }
+
+/* ---------- History ---------- */
+.history-card summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--bb-blue-dark);
+}
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.history-list li {
+  font-size: 0.88rem;
+  padding: 8px 10px;
+  background: #f7f5ee;
+  border-radius: 6px;
+}
+.history-n { color: var(--muted); font-weight: 700; margin-right: 6px; }
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+.modal-overlay[hidden] { display: none; }
+.modal-box {
+  background: white;
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+.modal-box h2 { margin-top: 0; color: var(--bb-blue-dark); }
+.modal-box h3 { color: var(--bb-blue-dark); margin-bottom: 4px; }
+.modal-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: var(--muted);
+  line-height: 1;
+}
+.modal-close:hover { color: var(--ink); }
+
+/* ---------- Confetti ---------- */
+.winner-screen { position: relative; overflow: hidden; }
+.confetti-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  width: 10px;
+  height: 16px;
+  opacity: 0.9;
+  animation-name: confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(520px) rotate(540deg); opacity: 0; }
+}
